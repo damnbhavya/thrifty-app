@@ -14,6 +14,7 @@ import { Colors } from '@/constants/Colors';
 import { Fonts, FontSizes } from '@/constants/Typography';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useMockBank } from '@/contexts/MockBankContext';
 
 function formatCurrency(amount: number): string {
   if (!amount || amount === 0) return 'Not set';
@@ -31,6 +32,11 @@ export default function ProfileScreen() {
   const [editingField, setEditingField] = useState<'income' | 'budget' | null>(null);
   const [editValue, setEditValue] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Mock bank
+  const { bank, setBalance } = useMockBank();
+  const [editingBalance, setEditingBalance] = useState(false);
+  const [balanceValue, setBalanceValue] = useState('');
 
   const startEdit = (field: 'income' | 'budget') => {
     const currentValue = field === 'income'
@@ -169,6 +175,63 @@ export default function ProfileScreen() {
           )}
         </Pressable>
       </View>
+
+      {/* Bank Account (Mock) */}
+      <Pressable
+        style={styles.bankCard}
+        onLongPress={() => {
+          setBalanceValue(bank.balance.toString());
+          setEditingBalance(true);
+        }}
+        delayLongPress={500}
+      >
+        <View style={styles.bankTopRow}>
+          <View style={styles.bankHeaderRow}>
+            <MaterialIcons name="account-balance" size={20} color={Colors.primary} />
+            <Text style={styles.bankTitle}>{bank.bankName}</Text>
+          </View>
+          <Text style={styles.bankHint}>Hold to edit</Text>
+        </View>
+
+        {editingBalance ? (
+          <View style={styles.bankEditRow}>
+            <Text style={styles.bankEditRupee}>₹</Text>
+            <TextInput
+              style={styles.bankEditInput}
+              value={balanceValue}
+              onChangeText={setBalanceValue}
+              keyboardType="numeric"
+              autoFocus
+              selectTextOnFocus
+            />
+            <Pressable
+              onPress={async () => {
+                const num = parseFloat(balanceValue.replace(/,/g, ''));
+                if (isNaN(num) || num < 0) {
+                  Alert.alert('Invalid', 'Enter a valid amount');
+                  return;
+                }
+                await setBalance(num);
+                setEditingBalance(false);
+              }}
+              style={styles.editButton}
+            >
+              <MaterialIcons name="check" size={20} color={Colors.primary} />
+            </Pressable>
+            <Pressable onPress={() => setEditingBalance(false)} style={styles.editButton}>
+              <MaterialIcons name="close" size={20} color={Colors.textMuted} />
+            </Pressable>
+          </View>
+        ) : (
+          <Text style={styles.bankBalance}>
+            ₹ {bank.balance.toLocaleString('en-IN')}
+          </Text>
+        )}
+
+        <Text style={styles.bankAccount}>
+          A/C •••• {bank.accountNumber.slice(-4)} • {bank.ifsc}
+        </Text>
+      </Pressable>
 
       {/* Preferences */}
       <View style={styles.card}>
@@ -339,5 +402,74 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 24,
+  },
+  // Bank card
+  bankCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 20,
+    marginBottom: 16,
+  },
+  bankTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  bankHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bankTitle: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  bankHint: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+  },
+  bankBalance: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes['3xl'],
+    color: Colors.textPrimary,
+    marginBottom: 4,
+  },
+  bankAccount: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    letterSpacing: 0.3,
+    marginTop: 4,
+  },
+  bankEditRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  bankEditRupee: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes['2xl'],
+    color: Colors.primary,
+  },
+  bankEditInput: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xl,
+    color: Colors.textPrimary,
   },
 });

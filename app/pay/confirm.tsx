@@ -19,7 +19,7 @@ import { CATEGORIES, CATEGORY_MAP } from '@/constants/Categories';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useOverrides } from '@/contexts/OverridesContext';
 import { useTransactions } from '@/contexts/TransactionsContext';
-import UpiAppLauncher, { LaunchResult } from '@lokal-dev/react-native-upi-app-launcher';
+import { useMockBank } from '@/contexts/MockBankContext';
 import { fetchWithAuth } from '@/lib/api';
 
 function formatCurrency(amount: number): string {
@@ -33,6 +33,7 @@ export default function ConfirmPaymentScreen() {
   const { profile } = useProfile();
   const { getCategoryForMerchant } = useOverrides();
   const { addTransaction } = useTransactions();
+  const { bank, debit } = useMockBank();
 
   const payeeName = params.payee || 'Unknown';
   const payeeUpi = params.upiId || '';
@@ -81,40 +82,51 @@ export default function ConfirmPaymentScreen() {
       return;
     }
 
+    // Check mock bank balance
+    if (amountNum > bank.balance) {
+      Alert.alert(
+        'Insufficient Balance',
+        `Your ${bank.bankName} account has only ${formatCurrency(bank.balance)}.\nThis payment requires ${formatCurrency(amountNum)}.`,
+      );
+      return;
+    }
+
     setProcessing(true);
 
     try {
-      // 1. Launch Native UPI Choose
-      const upiUrl = `upi://pay?pa=${encodeURIComponent(payeeUpi)}&pn=${encodeURIComponent(payeeName)}&am=${amountNum}&cu=INR&tn=Payment via Thrifty`;
-      
-      const result = await UpiAppLauncher.launchUpiApp({ url: upiUrl });
-      
-      // We process success or submitted (if pending). 
-      // If it failed or cancelled, we alert the user instead of recording a failed payment immediately.
-      if (result.result !== LaunchResult.Success && result.result !== LaunchResult.Submitted) {
-        Alert.alert('Payment Cancelled', 'The transaction was cancelled or failed.');
+      // Simulate UPI processing (1.5-3 seconds like a real payment)
+      const processingTime = 1500 + Math.random() * 1500;
+      await new Promise((resolve) => setTimeout(resolve, processingTime));
+
+      // Debit from mock bank
+      const success = await debit(amountNum);
+      if (!success) {
+        Alert.alert('Payment Failed', 'Transaction could not be processed.');
         setProcessing(false);
         return;
       }
 
-      // 2. Report to backend
-      const response = await fetchWithAuth('/pay/log', {
-        method: 'POST',
-        body: JSON.stringify({
-          amount: amountNum,
-          paid_to: payeeName,
-          category: selectedCategory,
-          note: note,
-          transaction_ref: result.transactionId || '',
-          status: result.result === LaunchResult.Success ? 'success' : 'pending'
-        }),
-      });
+      // Generate mock transaction reference
+      const txnRef = `UPI${Date.now().toString(36).toUpperCase()}`;
 
-      if (!response.ok) {
-        throw new Error('Failed to log transaction on server');
+      // Log to backend (best-effort)
+      try {
+        await fetchWithAuth('/pay/log', {
+          method: 'POST',
+          body: JSON.stringify({
+            amount: amountNum,
+            paid_to: payeeName,
+            category: selectedCategory,
+            note,
+            transaction_ref: txnRef,
+            status: 'success',
+          }),
+        });
+      } catch (e) {
+        console.warn('Failed to log payment to server:', e);
       }
 
-      // 3. Fallback tracking logic if they don't have realtime yet
+      // Local tracking
       addTransaction({
         merchant: payeeName,
         amount: amountNum,
@@ -122,11 +134,10 @@ export default function ConfirmPaymentScreen() {
         category: selectedCategory,
       });
 
-      // Navigate to success
       router.replace({
         pathname: '/pay/result',
         params: {
-          status: result.result === LaunchResult.Success ? 'success' : 'pending',
+          status: 'success',
           amount: amountNum.toString(),
           payee: payeeName,
           category: selectedCategory,
@@ -134,8 +145,8 @@ export default function ConfirmPaymentScreen() {
       });
 
     } catch (error) {
-      console.error('Error during native payment:', error);
-      Alert.alert('Error', 'Payment failed to process on device.');
+      console.error('Error during payment:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setProcessing(false);
     }
@@ -187,24 +198,47 @@ export default function ConfirmPaymentScreen() {
           </View>
 
           {/* Balance drain indicator */}
-          {budget > 0 && amountNum > 0 && (
+          {amountNum > 0 && (
             <Animated.View style={[styles.balanceDrain, balanceAnimStyle]}>
+              {/* Bank balance */}
               <View style={styles.balanceDrainRow}>
-                <Text style={styles.balanceDrainLabel}>Remaining after payment</Text>
+                <Text style={styles.balanceDrainLabel}>Bank balance</Text>
+                <Text style={styles.balanceDrainValue}>
+                  {formatCurrency(bank.balance)}
+                </Text>
+              </View>
+              <View style={[styles.balanceDrainRow, { marginTop: 6 }]}>
+                <Text style={styles.balanceDrainLabel}>After payment</Text>
                 <Text
                   style={[
                     styles.balanceDrainValue,
-                    wouldExceed && styles.balanceDrainDanger,
+                    amountNum > bank.balance && styles.balanceDrainDanger,
                   ]}
                 >
-                  {formatCurrency(remaining)}
+                  {formatCurrency(Math.max(bank.balance - amountNum, 0))}
                 </Text>
               </View>
-              {wouldExceed && (
+              {/* Budget warning */}
+              {budget > 0 && (
+                <View style={[styles.balanceDrainRow, { marginTop: 6 }]}>
+                  <Text style={styles.balanceDrainLabel}>Budget remaining</Text>
+                  <Text
+                    style={[
+                      styles.balanceDrainValue,
+                      wouldExceed && styles.balanceDrainDanger,
+                    ]}
+                  >
+                    {formatCurrency(remaining)}
+                  </Text>
+                </View>
+              )}
+              {(wouldExceed || amountNum > bank.balance) && (
                 <View style={styles.warningBanner}>
                   <MaterialIcons name="warning" size={16} color={Colors.danger} />
                   <Text style={styles.warningText}>
-                    This payment exceeds your monthly budget
+                    {amountNum > bank.balance
+                      ? 'Insufficient bank balance for this payment'
+                      : 'This payment exceeds your monthly budget'}
                   </Text>
                 </View>
               )}

@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ProfileProvider, useProfile } from '@/contexts/ProfileContext';
 import { OverridesProvider } from '@/contexts/OverridesContext';
 import { TransactionsProvider } from '@/contexts/TransactionsContext';
+import { MockBankProvider } from '@/contexts/MockBankContext';
 import { Colors } from '@/constants/Colors';
 import AnimatedSplash from '@/components/AnimatedSplash';
 
@@ -56,10 +57,12 @@ export default function RootLayout() {
     <AuthProvider>
       <ProfileProvider>
         <OverridesProvider>
-          <TransactionsProvider>
-            <RootLayoutNav />
-            <StatusBar style="light" />
-          </TransactionsProvider>
+          <MockBankProvider>
+            <TransactionsProvider>
+              <RootLayoutNav />
+              <StatusBar style="light" />
+            </TransactionsProvider>
+          </MockBankProvider>
         </OverridesProvider>
       </ProfileProvider>
     </AuthProvider>
