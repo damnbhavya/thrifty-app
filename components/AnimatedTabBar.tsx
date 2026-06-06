@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Colors } from '@/constants/Colors';
+import { useColors } from '@/contexts/ThemeContext';
 
 type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
@@ -25,6 +26,7 @@ const SPRING_CONFIG = {
 
 export default function AnimatedTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const C = useColors();
   const pillX = useSharedValue(0);
   const tabWidth = useSharedValue(0);
 
@@ -50,7 +52,7 @@ export default function AnimatedTabBar({ state, descriptors, navigation }: Botto
   }));
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { backgroundColor: C.tabBar, paddingBottom: insets.bottom, borderTopColor: C.tabBarBorder }]}>
       <View style={styles.bar} onLayout={onBarLayout}>
         {/* Animated pill background */}
         <Animated.View style={[styles.pillContainer, pillStyle]}>
@@ -94,7 +96,7 @@ export default function AnimatedTabBar({ state, descriptors, navigation }: Botto
               <MaterialIcons
                 name={TAB_ICONS[index]}
                 size={ICON_SIZE}
-                color={isFocused ? Colors.primary : Colors.textMuted}
+                color={isFocused ? C.primary : C.textMuted}
               />
             </Pressable>
           );

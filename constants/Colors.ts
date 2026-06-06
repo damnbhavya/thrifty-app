@@ -1,23 +1,22 @@
 /**
- * Thrifty Design Tokens — "Mira Style" Dark Theme
- * Synced with website's index.css
+ * Thrifty Design Tokens — Light & Dark Themes
  */
 
-export const Colors = {
+export const LightColors = {
   // Core brand
-  primary: '#CDF12B',        // Lime accent
-  primaryDark: '#b8d926',    // Pressed buttons
-  primaryText: '#111111',    // Text on lime backgrounds
-  secondary: '#1E45FC',      // Info, links
+  primary: '#CDF12B',
+  primaryDark: '#b8d926',
+  primaryText: '#111111',
+  secondary: '#1E45FC',
 
   // Surfaces
-  background: '#111111',     // App background
-  surface: '#1A1A1A',        // Card backgrounds
-  surfaceElevated: '#222222', // Sheets, modals
+  background: '#F7F8FA',
+  surface: '#FFFFFF',
+  surfaceElevated: '#F1F3F5',
 
   // Borders
-  border: '#2A2A2A',
-  borderHover: '#3A3A3A',
+  border: '#E2E6EA',
+  borderHover: '#CBD3DA',
 
   // Semantic
   success: '#22C55E',
@@ -25,14 +24,54 @@ export const Colors = {
   danger: '#FF4D4D',
 
   // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#888888',
-  textMuted: '#555555',
+  textPrimary: '#111827',
+  textSecondary: '#4B5563',
+  textMuted: '#6B7280',
 
   // Tab bar
-  tabBar: '#0D0D0D',
-  tabBarBorder: '#1A1A1A',
+  tabBar: '#FFFFFF',
+  tabBarBorder: '#E2E6EA',
 };
+
+export const DarkColors = {
+  // Core brand — same lime accent
+  primary: '#CDF12B',
+  primaryDark: '#b8d926',
+  primaryText: '#111111',
+  secondary: '#1E45FC',
+
+  // Surfaces — dark mode
+  background: '#111111',
+  surface: '#1A1A1A',
+  surfaceElevated: '#222222',
+
+  // Borders
+  border: '#2A2A2A',
+  borderHover: '#3A3A3A',
+
+  // Semantic — same
+  success: '#22C55E',
+  warning: '#EAB308',
+  danger: '#FF4D4D',
+
+  // Text — inverted
+  textPrimary: '#F5F5F5',
+  textSecondary: '#A1A1A1',
+  textMuted: '#6B7280',
+
+  // Tab bar
+  tabBar: '#111111',
+  tabBarBorder: '#2A2A2A',
+};
+
+export type ThemeColors = typeof LightColors;
+
+/**
+ * Default export — light theme.
+ * This is kept for backward compatibility with existing StyleSheet.create calls.
+ * New code should use useTheme().colors instead.
+ */
+export const Colors = LightColors;
 
 /** Category colors — matches website DashboardContext */
 export const CategoryColors: Record<string, string> = {

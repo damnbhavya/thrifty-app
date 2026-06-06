@@ -80,8 +80,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(data)
-        .eq('id', user.id);
+        .upsert({ id: user.id, ...data });
 
       if (error) {
         return { error: new Error(error.message) };

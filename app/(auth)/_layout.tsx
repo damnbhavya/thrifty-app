@@ -1,16 +1,17 @@
 import { Stack } from 'expo-router';
-import { Colors } from '@/constants/Colors';
+import { useColors } from '@/contexts/ThemeContext';
 
 /**
  * Auth group layout — Login, Sign Up screens.
- * No tab bar, clean stack navigation with dark theme.
+ * No tab bar, clean stack navigation.
  */
 export default function AuthLayout() {
+  const C = useColors();
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.background },
+        contentStyle: { backgroundColor: C.background },
         animation: 'fade',
       }}
     >

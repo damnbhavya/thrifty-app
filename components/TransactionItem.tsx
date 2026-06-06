@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Colors } from '@/constants/Colors';
+import { useColors } from '@/contexts/ThemeContext';
 import { Fonts, FontSizes } from '@/constants/Typography';
 import { CATEGORIES, CATEGORY_MAP } from '@/constants/Categories';
 import { useOverrides } from '@/contexts/OverridesContext';
@@ -19,11 +20,13 @@ function formatAmount(amount: number): string {
   });
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function formatDate(dateStr: string): string {
   try {
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
     const day = date.getDate();
-    const month = date.toLocaleString('en-IN', { month: 'short' });
+    const month = MONTHS[date.getMonth()];
     return `${day} ${month}`;
   } catch {
     return dateStr;
@@ -32,6 +35,7 @@ function formatDate(dateStr: string): string {
 
 export default function TransactionItem({ transaction, editable = true }: TransactionItemProps) {
   const { getCategoryForMerchant, saveOverride } = useOverrides();
+  const C = useColors();
   const [showPicker, setShowPicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -66,23 +70,23 @@ export default function TransactionItem({ transaction, editable = true }: Transa
 
         {/* Merchant & category */}
         <View style={styles.details}>
-          <Text style={styles.merchant} numberOfLines={1}>
+          <Text style={[styles.merchant, { color: C.textPrimary }]} numberOfLines={1}>
             {transaction.merchant}
           </Text>
           <View style={styles.categoryRow}>
-            <Text style={styles.categoryLabel}>{category.label}</Text>
+            <Text style={[styles.categoryLabel, { color: C.textMuted }]}>{category.label}</Text>
             {isOverridden && (
-              <MaterialIcons name="edit" size={10} color={Colors.primary} style={styles.overrideIcon} />
+              <MaterialIcons name="edit" size={10} color={C.primary} style={styles.overrideIcon} />
             )}
           </View>
         </View>
 
         {/* Amount & date */}
         <View style={styles.amountContainer}>
-          <Text style={[styles.amount, isDebit && styles.amountDebit]}>
+          <Text style={[styles.amount, { color: C.success }, isDebit && { color: C.textPrimary }]}>
             {isDebit ? '- ' : '+ '}{formatAmount(transaction.amount)}
           </Text>
-          <Text style={styles.date}>{formatDate(transaction.date)}</Text>
+          <Text style={[styles.date, { color: C.textMuted }]}>{formatDate(transaction.date)}</Text>
         </View>
       </Pressable>
 
@@ -94,10 +98,10 @@ export default function TransactionItem({ transaction, editable = true }: Transa
         onRequestClose={() => setShowPicker(false)}
       >
         <Pressable style={styles.overlay} onPress={() => setShowPicker(false)}>
-          <Pressable style={styles.pickerSheet} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.pickerSheet, { backgroundColor: C.surface }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.pickerHeader}>
-              <Text style={styles.pickerTitle}>Change Category</Text>
-              <Text style={styles.pickerSubtitle} numberOfLines={1}>
+              <Text style={[styles.pickerTitle, { color: C.textPrimary }]}>Change Category</Text>
+              <Text style={[styles.pickerSubtitle, { color: C.textSecondary }]} numberOfLines={1}>
                 for "{transaction.merchant}"
               </Text>
             </View>
@@ -119,20 +123,20 @@ export default function TransactionItem({ transaction, editable = true }: Transa
                     <MaterialIcons
                       name={cat.icon as any}
                       size={18}
-                      color={isSelected ? Colors.primary : Colors.textSecondary}
+                      color={isSelected ? C.primary : C.textSecondary}
                     />
-                    <Text style={[styles.pickerLabel, isSelected && styles.pickerLabelSelected]}>
+                    <Text style={[styles.pickerLabel, { color: C.textPrimary }, isSelected && { fontFamily: Fonts.semiBold, color: C.primary }]}>
                       {cat.label}
                     </Text>
                     {isSelected && (
-                      <MaterialIcons name="check" size={18} color={Colors.primary} />
+                      <MaterialIcons name="check" size={18} color={C.primary} />
                     )}
                   </Pressable>
                 );
               })}
             </ScrollView>
 
-            <Text style={styles.pickerHint}>
+            <Text style={[styles.pickerHint, { color: C.textMuted }]}>
               This will apply to all transactions from this merchant
             </Text>
           </Pressable>

@@ -14,11 +14,12 @@ import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
+import { useColors } from '@/contexts/ThemeContext';
 import { Fonts, FontSizes } from '@/constants/Typography';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useTransactions } from '@/contexts/TransactionsContext';
-import { fetchCurrentMonthReport } from '@/lib/api';
+import { fetchAllReports, fetchCurrentMonthReport } from '@/lib/api';
 import type { Transaction } from '@/lib/api';
 import Logo from '@/components/Logo';
 import TransactionItem from '@/components/TransactionItem';
@@ -39,6 +40,7 @@ export default function HomeScreen() {
   const { localTransactions, localSpentThisMonth } = useTransactions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const C = useColors();
 
   const [apiTransactions, setApiTransactions] = useState<Transaction[]>([]);
   const [apiSpent, setApiSpent] = useState(0);
@@ -53,19 +55,23 @@ export default function HomeScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const report = await fetchCurrentMonthReport();
-      if (report) {
-        const totals = report.category_totals || {};
+      const currentReport = await fetchCurrentMonthReport();
+      if (currentReport) {
+        const totals = currentReport.category_totals || {};
         const spent = Object.values(totals).reduce((sum, val) => sum + (val || 0), 0);
         setApiSpent(spent);
+      } else {
+        setApiSpent(0);
+      }
 
-        const txns = report.transactions || [];
-        const sorted = [...txns].sort(
+      const reports = await fetchAllReports();
+      const mergedTransactions = reports.flatMap((report) => report.transactions || []);
+      if (mergedTransactions.length > 0) {
+        const sorted = [...mergedTransactions].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         setApiTransactions(sorted);
       } else {
-        setApiSpent(0);
         setApiTransactions([]);
       }
     } catch (error) {
@@ -92,16 +98,16 @@ export default function HomeScreen() {
   const recentTransactions = allTransactions.slice(0, 5);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: C.background, paddingTop: insets.top }]}>
       {/* Top Bar — Logo + Search */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { borderBottomColor: C.border }]}>
         <Logo size={32} />
-        <View style={styles.searchContainer}>
-          <MaterialIcons name="search" size={20} color={Colors.textMuted} style={styles.searchIcon} />
+        <View style={[styles.searchContainer, { backgroundColor: C.surface, borderColor: C.border }]}>
+          <MaterialIcons name="search" size={20} color={C.textMuted} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: C.textPrimary }]}
             placeholder="Search phone number to pay"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={C.textMuted}
             keyboardType="phone-pad"
           />
         </View>
@@ -111,60 +117,60 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
+          refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
-            progressBackgroundColor={Colors.surface}
+            tintColor={C.primary}
+            colors={[C.primary]}
+            progressBackgroundColor={C.surface}
           />
         }
       >
         {/* Quick Actions */}
         <Animated.View entering={FadeInUp.duration(400).delay(100)} style={styles.actionsRow}>
           <Pressable
-            style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+            style={({ pressed }) => [styles.actionButton, { backgroundColor: C.surface, borderColor: C.border }, pressed && { backgroundColor: C.surfaceElevated, transform: [{ scale: 0.97 }] }]}
             onPress={() => router.push('/pay/scan')}
           >
             <View style={styles.actionIconContainer}>
-              <MaterialIcons name="qr-code-scanner" size={24} color={Colors.primary} />
+              <MaterialIcons name="qr-code-scanner" size={24} color={C.primary} />
             </View>
-            <Text style={styles.actionLabel}>Scan QR{'\n'}Code</Text>
+            <Text style={[styles.actionLabel, { color: C.textSecondary }]}>Scan QR{'\n'}Code</Text>
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+            style={({ pressed }) => [styles.actionButton, { backgroundColor: C.surface, borderColor: C.border }, pressed && { backgroundColor: C.surfaceElevated, transform: [{ scale: 0.97 }] }]}
             onPress={() => router.push('/pay')}
           >
             <View style={styles.actionIconContainer}>
-              <MaterialIcons name="phone" size={24} color={Colors.primary} />
+              <MaterialIcons name="phone" size={24} color={C.primary} />
             </View>
-            <Text style={styles.actionLabel}>Pay{'\n'}Anyone</Text>
+            <Text style={[styles.actionLabel, { color: C.textSecondary }]}>Pay{'\n'}Anyone</Text>
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+            style={({ pressed }) => [styles.actionButton, { backgroundColor: C.surface, borderColor: C.border }, pressed && { backgroundColor: C.surfaceElevated, transform: [{ scale: 0.97 }] }]}
             onPress={() => router.push('/pay/myqr')}
           >
             <View style={styles.actionIconContainer}>
-              <MaterialIcons name="qr-code" size={22} color={Colors.primary} />
+              <MaterialIcons name="qr-code" size={22} color={C.primary} />
             </View>
-            <Text style={styles.actionLabel}>Show Your{'\n'}QR Code</Text>
+            <Text style={[styles.actionLabel, { color: C.textSecondary }]}>Show Your{'\n'}QR Code</Text>
           </Pressable>
         </Animated.View>
 
         {/* Budget Card */}
-        <Animated.View entering={FadeInUp.duration(400).delay(200)} style={styles.card}>
-          <Text style={styles.sectionLabel}>REMAINING BUDGET</Text>
-          <Text style={[styles.balanceAmount, { color: budgetColor === Colors.primary ? Colors.textPrimary : budgetColor }]}>
+        <Animated.View entering={FadeInUp.duration(400).delay(200)} style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+          <Text style={[styles.sectionLabel, { color: C.primary }]}>REMAINING BUDGET</Text>
+          <Text style={[styles.balanceAmount, { color: budgetColor === C.primary ? C.textPrimary : budgetColor }]}>
             {budget > 0 ? formatCurrency(remaining) : '₹ --,---'}
           </Text>
 
           {/* Progress bar */}
           {budget > 0 && (
             <View style={styles.progressBarContainer}>
-              <View style={styles.progressBarTrack}>
+              <View style={[styles.progressBarTrack, { backgroundColor: C.border }]}>
                 <View
                   style={[
                     styles.progressBarFill,
@@ -183,15 +189,15 @@ export default function HomeScreen() {
 
           <View style={styles.balanceRow}>
             <View style={styles.balanceStat}>
-              <Text style={styles.statLabel}>Budget</Text>
-              <Text style={styles.statValue}>
+              <Text style={[styles.statLabel, { color: C.textSecondary }]}>Budget</Text>
+              <Text style={[styles.statValue, { color: C.textPrimary }]}>
                 {budget > 0 ? formatCurrency(budget) : 'Not set'}
               </Text>
             </View>
-            <View style={styles.balanceDivider} />
+            <View style={[styles.balanceDivider, { backgroundColor: C.border }]} />
             <View style={styles.balanceStat}>
-              <Text style={styles.statLabel}>Spent</Text>
-              <Text style={styles.statValue}>{formatCurrency(totalSpent)}</Text>
+              <Text style={[styles.statLabel, { color: C.textSecondary }]}>Spent</Text>
+              <Text style={[styles.statValue, { color: C.textPrimary }]}>{formatCurrency(totalSpent)}</Text>
             </View>
           </View>
         </Animated.View>
@@ -199,27 +205,27 @@ export default function HomeScreen() {
         {/* Recent Transactions */}
         <Animated.View entering={FadeInUp.duration(400).delay(300)}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>RECENT TRANSACTIONS</Text>
+            <Text style={[styles.sectionLabel, { color: C.primary }]}>RECENT TRANSACTIONS</Text>
           </View>
 
           {loading ? (
-            <View style={styles.loadingState}>
-              <ActivityIndicator size="small" color={Colors.primary} />
+            <View style={[styles.loadingState, { backgroundColor: C.surface, borderColor: C.border }]}>
+              <ActivityIndicator size="small" color={C.primary} />
             </View>
           ) : recentTransactions.length > 0 ? (
-            <View style={styles.transactionCard}>
+            <View style={[styles.transactionCard, { backgroundColor: C.surface, borderColor: C.border }]}>
               {recentTransactions.map((txn, index) => (
                 <View key={`${txn.merchant}-${txn.date}-${index}`}>
-                  {index > 0 && <View style={styles.transactionDivider} />}
+                  {index > 0 && <View style={[styles.transactionDivider, { backgroundColor: C.border }]} />}
                   <TransactionItem transaction={txn} />
                 </View>
               ))}
             </View>
           ) : (
-            <View style={styles.emptyState}>
-              <MaterialIcons name="inbox" size={32} color={Colors.textMuted} style={styles.emptyIcon} />
-              <Text style={styles.emptyTitle}>No transactions yet</Text>
-              <Text style={styles.emptySubtext}>
+            <View style={[styles.emptyState, { backgroundColor: C.surface, borderColor: C.border }]}>
+              <MaterialIcons name="inbox" size={32} color={C.textMuted} style={styles.emptyIcon} />
+              <Text style={[styles.emptyTitle, { color: C.textPrimary }]}>No transactions yet</Text>
+              <Text style={[styles.emptySubtext, { color: C.textSecondary }]}>
                 Upload a UPI statement on the website{'\n'}or make a payment to see data here.
               </Text>
             </View>

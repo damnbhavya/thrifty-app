@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Colors } from '@/constants/Colors';
+import { useColors, useTheme } from '@/contexts/ThemeContext';
 import { Fonts, FontSizes } from '@/constants/Typography';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
-import { useMockBank } from '@/contexts/MockBankContext';
 
 function formatCurrency(amount: number): string {
   if (!amount || amount === 0) return 'Not set';
@@ -24,6 +24,8 @@ function formatCurrency(amount: number): string {
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { profile, updateProfile } = useProfile();
+  const { mode, setMode, isDark } = useTheme();
+  const C = useColors();
 
   const displayName = profile?.name || user?.user_metadata?.name || 'User';
   const email = user?.email || '';
@@ -32,11 +34,6 @@ export default function ProfileScreen() {
   const [editingField, setEditingField] = useState<'income' | 'budget' | null>(null);
   const [editValue, setEditValue] = useState('');
   const [saving, setSaving] = useState(false);
-
-  // Mock bank
-  const { bank, setBalance } = useMockBank();
-  const [editingBalance, setEditingBalance] = useState(false);
-  const [balanceValue, setBalanceValue] = useState('');
 
   const startEdit = (field: 'income' | 'budget') => {
     const currentValue = field === 'income'
@@ -76,35 +73,35 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: C.background }]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
       {/* Profile Card */}
-      <View style={styles.card}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
+      <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+        <View style={[styles.avatar, { backgroundColor: C.primary }]}>
+          <Text style={[styles.avatarText, { color: C.primaryText }]}>
             {displayName.charAt(0).toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.name}>{displayName}</Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text style={[styles.name, { color: C.textPrimary }]}>{displayName}</Text>
+        <Text style={[styles.email, { color: C.textSecondary }]}>{email}</Text>
       </View>
 
       {/* Financial Settings */}
-      <View style={styles.card}>
-        <Text style={styles.sectionLabel}>FINANCIAL SETTINGS</Text>
+      <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+        <Text style={[styles.sectionLabel, { color: C.primary }]}>FINANCIAL SETTINGS</Text>
 
         {/* Monthly Income */}
         <Pressable style={styles.settingRow} onPress={() => startEdit('income')}>
           <View style={styles.settingLeft}>
-            <MaterialIcons name="account-balance-wallet" size={20} color={Colors.textMuted} />
-            <Text style={styles.settingLabel}>Monthly Income</Text>
+            <MaterialIcons name="account-balance-wallet" size={20} color={C.textMuted} />
+            <Text style={[styles.settingLabel, { color: C.textPrimary }]}>Monthly Income</Text>
           </View>
           {editingField === 'income' ? (
             <View style={styles.editRow}>
               <TextInput
-                style={styles.editInput}
+                style={[styles.editInput, { backgroundColor: C.background, borderColor: C.primary, color: C.textPrimary }]}
                 value={editValue}
                 onChangeText={setEditValue}
                 keyboardType="numeric"
@@ -112,40 +109,40 @@ export default function ProfileScreen() {
                 selectTextOnFocus
               />
               {saving ? (
-                <ActivityIndicator size="small" color={Colors.primary} />
+                <ActivityIndicator size="small" color={C.primary} />
               ) : (
                 <>
                   <Pressable onPress={saveEdit} style={styles.editButton}>
-                    <MaterialIcons name="check" size={20} color={Colors.primary} />
+                    <MaterialIcons name="check" size={20} color={C.primary} />
                   </Pressable>
                   <Pressable onPress={cancelEdit} style={styles.editButton}>
-                    <MaterialIcons name="close" size={20} color={Colors.textMuted} />
+                    <MaterialIcons name="close" size={20} color={C.textMuted} />
                   </Pressable>
                 </>
               )}
             </View>
           ) : (
             <View style={styles.settingRight}>
-              <Text style={styles.settingValue}>
+              <Text style={[styles.settingValue, { color: C.textSecondary }]}>
                 {formatCurrency(profile?.monthly_income || 0)}
               </Text>
-              <MaterialIcons name="chevron-right" size={20} color={Colors.textMuted} />
+              <MaterialIcons name="chevron-right" size={20} color={C.textMuted} />
             </View>
           )}
         </Pressable>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: C.border }]} />
 
         {/* Global Budget */}
         <Pressable style={styles.settingRow} onPress={() => startEdit('budget')}>
           <View style={styles.settingLeft}>
-            <MaterialIcons name="savings" size={20} color={Colors.textMuted} />
-            <Text style={styles.settingLabel}>Monthly Budget</Text>
+            <MaterialIcons name="savings" size={20} color={C.textMuted} />
+            <Text style={[styles.settingLabel, { color: C.textPrimary }]}>Monthly Budget</Text>
           </View>
           {editingField === 'budget' ? (
             <View style={styles.editRow}>
               <TextInput
-                style={styles.editInput}
+                style={[styles.editInput, { backgroundColor: C.background, borderColor: C.primary, color: C.textPrimary }]}
                 value={editValue}
                 onChangeText={setEditValue}
                 keyboardType="numeric"
@@ -153,109 +150,93 @@ export default function ProfileScreen() {
                 selectTextOnFocus
               />
               {saving ? (
-                <ActivityIndicator size="small" color={Colors.primary} />
+                <ActivityIndicator size="small" color={C.primary} />
               ) : (
                 <>
                   <Pressable onPress={saveEdit} style={styles.editButton}>
-                    <MaterialIcons name="check" size={20} color={Colors.primary} />
+                    <MaterialIcons name="check" size={20} color={C.primary} />
                   </Pressable>
                   <Pressable onPress={cancelEdit} style={styles.editButton}>
-                    <MaterialIcons name="close" size={20} color={Colors.textMuted} />
+                    <MaterialIcons name="close" size={20} color={C.textMuted} />
                   </Pressable>
                 </>
               )}
             </View>
           ) : (
             <View style={styles.settingRight}>
-              <Text style={styles.settingValue}>
+              <Text style={[styles.settingValue, { color: C.textSecondary }]}>
                 {formatCurrency(profile?.global_budget || 0)}
               </Text>
-              <MaterialIcons name="chevron-right" size={20} color={Colors.textMuted} />
+              <MaterialIcons name="chevron-right" size={20} color={C.textMuted} />
             </View>
           )}
         </Pressable>
       </View>
+      {/* Preferences */}
+      <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+        <Text style={[styles.sectionLabel, { color: C.primary }]}>PREFERENCES</Text>
 
-      {/* Bank Account (Mock) */}
-      <Pressable
-        style={styles.bankCard}
-        onLongPress={() => {
-          setBalanceValue(bank.balance.toString());
-          setEditingBalance(true);
-        }}
-        delayLongPress={500}
-      >
-        <View style={styles.bankTopRow}>
-          <View style={styles.bankHeaderRow}>
-            <MaterialIcons name="account-balance" size={20} color={Colors.primary} />
-            <Text style={styles.bankTitle}>{bank.bankName}</Text>
+        {/* Theme Toggle */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <MaterialIcons name={isDark ? 'dark-mode' : 'light-mode'} size={20} color={C.textMuted} />
+            <Text style={[styles.settingLabel, { color: C.textPrimary }]}>Theme</Text>
           </View>
-          <Text style={styles.bankHint}>Hold to edit</Text>
+          <View style={{ flexDirection: 'row', gap: 4 }}>
+            <Pressable
+              onPress={() => setMode('light')}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 8,
+                backgroundColor: mode === 'light' ? C.primary : C.surfaceElevated,
+              }}
+            >
+              <Text style={{
+                fontFamily: Fonts.semiBold,
+                fontSize: FontSizes.xs,
+                color: mode === 'light' ? C.primaryText : C.textMuted,
+              }}>Light</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setMode('dark')}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 8,
+                backgroundColor: mode === 'dark' ? C.primary : C.surfaceElevated,
+              }}
+            >
+              <Text style={{
+                fontFamily: Fonts.semiBold,
+                fontSize: FontSizes.xs,
+                color: mode === 'dark' ? C.primaryText : C.textMuted,
+              }}>Dark</Text>
+            </Pressable>
+          </View>
         </View>
 
-        {editingBalance ? (
-          <View style={styles.bankEditRow}>
-            <Text style={styles.bankEditRupee}>₹</Text>
-            <TextInput
-              style={styles.bankEditInput}
-              value={balanceValue}
-              onChangeText={setBalanceValue}
-              keyboardType="numeric"
-              autoFocus
-              selectTextOnFocus
-            />
-            <Pressable
-              onPress={async () => {
-                const num = parseFloat(balanceValue.replace(/,/g, ''));
-                if (isNaN(num) || num < 0) {
-                  Alert.alert('Invalid', 'Enter a valid amount');
-                  return;
-                }
-                await setBalance(num);
-                setEditingBalance(false);
-              }}
-              style={styles.editButton}
-            >
-              <MaterialIcons name="check" size={20} color={Colors.primary} />
-            </Pressable>
-            <Pressable onPress={() => setEditingBalance(false)} style={styles.editButton}>
-              <MaterialIcons name="close" size={20} color={Colors.textMuted} />
-            </Pressable>
-          </View>
-        ) : (
-          <Text style={styles.bankBalance}>
-            ₹ {bank.balance.toLocaleString('en-IN')}
-          </Text>
-        )}
-
-        <Text style={styles.bankAccount}>
-          A/C •••• {bank.accountNumber.slice(-4)} • {bank.ifsc}
-        </Text>
-      </Pressable>
-
-      {/* Preferences */}
-      <View style={styles.card}>
-        <Text style={styles.sectionLabel}>PREFERENCES</Text>
+        <View style={[styles.divider, { backgroundColor: C.border }]} />
 
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
-            <MaterialIcons name="notifications-none" size={20} color={Colors.textMuted} />
-            <Text style={styles.settingLabel}>Notifications</Text>
+            <MaterialIcons name="notifications-none" size={20} color={C.textMuted} />
+            <Text style={[styles.settingLabel, { color: C.textPrimary }]}>Notifications</Text>
           </View>
-          <Text style={styles.settingValueMuted}>Coming soon</Text>
+          <Text style={[styles.settingValueMuted, { color: C.textMuted }]}>Coming soon</Text>
         </View>
       </View>
 
       {/* Sign Out */}
       <Pressable
-        style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutPressed]}
+        style={({ pressed }) => [styles.logoutButton, { backgroundColor: C.surface, borderColor: C.danger }, pressed && { backgroundColor: 'rgba(255, 77, 77, 0.1)', transform: [{ scale: 0.98 }] }]}
         onPress={signOut}
       >
-        <MaterialIcons name="logout" size={18} color={Colors.danger} style={styles.logoutIcon} />
-        <Text style={styles.logoutText}>Sign Out</Text>
+        <MaterialIcons name="logout" size={18} color={C.danger} style={styles.logoutIcon} />
+        <Text style={[styles.logoutText, { color: C.danger }]}>Sign Out</Text>
       </Pressable>
 
-      <Text style={styles.version}>Thrifty v1.0.0</Text>
+      <Text style={[styles.version, { color: C.textMuted }]}>Thrifty v1.0.0</Text>
     </ScrollView>
   );
 }
@@ -402,74 +383,5 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: 24,
-  },
-  // Bank card
-  bankCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 20,
-    marginBottom: 16,
-  },
-  bankTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  bankHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  bankTitle: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  bankHint: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.xs,
-    color: Colors.textMuted,
-    fontStyle: 'italic',
-  },
-  bankBalance: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes['3xl'],
-    color: Colors.textPrimary,
-    marginBottom: 4,
-  },
-  bankAccount: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.xs,
-    color: Colors.textMuted,
-    letterSpacing: 0.3,
-    marginTop: 4,
-  },
-  bankEditRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  bankEditRupee: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes['2xl'],
-    color: Colors.primary,
-  },
-  bankEditInput: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xl,
-    color: Colors.textPrimary,
   },
 });

@@ -16,7 +16,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ProfileProvider, useProfile } from '@/contexts/ProfileContext';
 import { OverridesProvider } from '@/contexts/OverridesContext';
 import { TransactionsProvider } from '@/contexts/TransactionsContext';
-import { MockBankProvider } from '@/contexts/MockBankContext';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import AnimatedSplash from '@/components/AnimatedSplash';
 
@@ -44,6 +44,12 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
+    import('@/lib/api').then(({ processOfflineQueue }) => {
+      processOfflineQueue();
+    });
+  }, []);
+
+  useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
@@ -54,22 +60,22 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <ProfileProvider>
-        <OverridesProvider>
-          <MockBankProvider>
-            <TransactionsProvider>
-              <RootLayoutNav />
-              <StatusBar style="light" />
-            </TransactionsProvider>
-          </MockBankProvider>
-        </OverridesProvider>
-      </ProfileProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ProfileProvider>
+          <OverridesProvider>
+              <TransactionsProvider>
+                <RootLayoutNav />
+              </TransactionsProvider>
+          </OverridesProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
 function RootLayoutNav() {
+  const { isDark, colors } = useTheme();
   const { user, loading: authLoading } = useAuth();
   const { hasCompletedOnboarding, loading: profileLoading } = useProfile();
   const segments = useSegments();
@@ -114,11 +120,12 @@ function RootLayoutNav() {
   }, [user, isLoading, showSplash, segments, hasCompletedOnboarding]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
+          contentStyle: { backgroundColor: colors.background },
           animation: 'fade',
           animationDuration: 150,
         }}

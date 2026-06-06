@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { Colors } from '@/constants/Colors';
+import { useColors } from '@/contexts/ThemeContext';
 import { Fonts, FontSizes } from '@/constants/Typography';
 import Logo from '@/components/Logo';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const C = useColors();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,13 +39,12 @@ export default function LoginScreen() {
       setError(signInError.message);
       setLoading(false);
     }
-    // Navigation happens automatically via AuthContext + root layout
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: C.background }]}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -53,26 +53,26 @@ export default function LoginScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Logo size={40} />
-          <Text style={styles.logo}>Thrifty</Text>
+          <Text style={[styles.logo, { color: C.primary }]}>Thrifty</Text>
         </View>
 
         {/* Form */}
-        <View style={styles.form}>
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+        <View style={[styles.form, { backgroundColor: C.surface, borderColor: C.border }]}>
+          <Text style={[styles.title, { color: C.textPrimary }]}>Welcome back</Text>
+          <Text style={[styles.subtitle, { color: C.textSecondary }]}>Sign in to your account</Text>
 
           {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
+            <View style={[styles.errorContainer, { borderColor: C.danger }]}>
+              <Text style={[styles.errorText, { color: C.danger }]}>{error}</Text>
             </View>
           )}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={[styles.label, { color: C.textSecondary }]}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: C.background, borderColor: C.border, color: C.textPrimary }]}
               placeholder="you@example.com"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={C.textMuted}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -83,11 +83,11 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={[styles.label, { color: C.textSecondary }]}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: C.background, borderColor: C.border, color: C.textPrimary }]}
               placeholder="••••••••"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={C.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -100,24 +100,25 @@ export default function LoginScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.button,
-              pressed && styles.buttonPressed,
+              { backgroundColor: C.primary },
+              pressed && { backgroundColor: C.primaryDark, transform: [{ scale: 0.98 }] },
               loading && styles.buttonDisabled,
             ]}
             onPress={handleLogin}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.primaryText} size="small" />
+              <ActivityIndicator color={C.primaryText} size="small" />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <Text style={[styles.buttonText, { color: C.primaryText }]}>Sign In</Text>
             )}
           </Pressable>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={[styles.footerText, { color: C.textSecondary }]}>Don't have an account? </Text>
             <Link href="/(auth)/signup" asChild>
               <Pressable>
-                <Text style={styles.footerLink}>Sign Up</Text>
+                <Text style={[styles.footerLink, { color: C.primary }]}>Sign Up</Text>
               </Pressable>
             </Link>
           </View>
@@ -130,7 +131,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -148,32 +148,26 @@ const styles = StyleSheet.create({
   logo: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes['3xl'],
-    color: Colors.primary,
     letterSpacing: -1,
   },
   form: {
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
     padding: 24,
   },
   title: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.xl,
-    color: Colors.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
     fontFamily: Fonts.regular,
     fontSize: FontSizes.base,
-    color: Colors.textSecondary,
     marginBottom: 24,
   },
   errorContainer: {
     backgroundColor: 'rgba(255, 77, 77, 0.1)',
     borderWidth: 1,
-    borderColor: Colors.danger,
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
@@ -181,7 +175,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
-    color: Colors.danger,
   },
   inputGroup: {
     marginBottom: 16,
@@ -189,32 +182,23 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: Fonts.regular,
     fontSize: FontSizes.base,
-    color: Colors.textPrimary,
   },
   button: {
-    backgroundColor: Colors.primary,
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-  },
-  buttonPressed: {
-    backgroundColor: Colors.primaryDark,
-    transform: [{ scale: 0.98 }],
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -222,7 +206,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.base,
-    color: Colors.primaryText,
   },
   footer: {
     flexDirection: 'row',
@@ -232,11 +215,9 @@ const styles = StyleSheet.create({
   footerText: {
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
-    color: Colors.textSecondary,
   },
   footerLink: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.sm,
-    color: Colors.primary,
   },
 });

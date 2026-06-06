@@ -9,6 +9,7 @@ import Animated, {
   interpolateColor,
   Easing,
   runOnJS,
+  SharedValue,
 } from 'react-native-reanimated';
 import Logo from '@/components/Logo';
 import { Colors } from '@/constants/Colors';
@@ -104,7 +105,7 @@ export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
  * Since SVG fill can't be directly animated via useAnimatedStyle,
  * we use a crossfade approach with two logos.
  */
-function LogoWithAnimatedColor({ bgProgress }: { bgProgress: Animated.SharedValue<number> }) {
+function LogoWithAnimatedColor({ bgProgress }: { bgProgress: SharedValue<number> }) {
   // Lime logo (visible on dark bg) fades out
   const limeLogoStyle = useAnimatedStyle(() => ({
     opacity: 1 - bgProgress.value,
